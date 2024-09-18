@@ -13,9 +13,10 @@ export const viewDashboard = async (req, res) => {
       availableToTrade: client.availableToTrade,
       marginUsed: client.marginUsed,
       recentTransactions: client.recentTransactions,
-      positions: portfolio.stocks,
+      positions: portfolio?.stocks,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: error.message });
   }
 };
