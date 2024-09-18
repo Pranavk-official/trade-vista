@@ -5,6 +5,10 @@ import {
   manageStock,
   buyStockForClient,
   sellStockForClient,
+  viewAllStocks,
+  viewAllClients,
+  viewStockDetails,
+  viewClientDetails,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -14,5 +18,11 @@ router.post("/create-user", authenticateUser, isAdmin, createUser);
 router.post("/manage-stock", authenticateUser, isAdmin, manageStock);
 router.post("/buy-stock", authenticateUser, isAdmin, buyStockForClient);
 router.post("/sell-stock", authenticateUser, isAdmin, sellStockForClient);
+
+// Admin Views
+router.get("/clients", viewAllClients);
+router.get("/clients/:clientId", viewClientDetails);
+router.get("/stocks", viewAllStocks);
+router.get("/stocks/:stockId", viewStockDetails);
 
 export default router;
