@@ -62,7 +62,30 @@ export const buyStockForClient = async (req, res) => {
     const stock = await Stock.findById(stockId);
     const client = await Client.findById(clientId);
 
-    const portfolio = await Portfolio.findOne({ clientId });
+    if (!stock) {
+      return res.status(404).json({ message: "Stock not found" });
+    }
+
+    if (!client) {
+      return res.status(404).json({ message: "Client not found" });
+    }
+
+    const totalCost = buyPrice * quantity;
+    if (client.totalCash < totalCost) {
+      return res.status(400).json({ message: "Insufficient funds" });
+    }
+
+    if (stock.availableQuantity < quantity) {
+      return res.status(400).json({ message: "Insufficient stock quantity" });
+    }
+
+    let portfolio = await Portfolio.findOne({ clientId });
+
+    if (!portfolio) {
+      // Create a new portfolio if it doesn't exist
+      portfolio = new Portfolio({ clientId, stocks: [] });
+    }
+
     const existingStock = portfolio.stocks.find((s) =>
       s.stockId.equals(stockId),
     );
@@ -78,9 +101,16 @@ export const buyStockForClient = async (req, res) => {
       });
     }
 
+    // Update stock availability and client's totalCash
+    stock.availableQuantity -= quantity;
+    client.totalCash -= totalCost;
+
+    await stock.save();
+    await client.save();
     await portfolio.save();
     res.json({ message: "Stock bought successfully" });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -89,21 +119,104 @@ export const sellStockForClient = async (req, res) => {
   const { clientId, stockId, sellPrice } = req.body;
 
   try {
+    const client = await Client.findById(clientId);
     const portfolio = await Portfolio.findOne({ clientId });
-    const stock = portfolio.stocks.find((s) => s.stockId.equals(stockId));
+    const stock = await Stock.findById(stockId);
 
-    if (!stock) {
-      return res
-        .status(404)
-        .json({ message: "Stock not found in client portfolio" });
+    if (!client) {
+      return res.status(404).json({ message: "Client not found" });
     }
 
-    stock.status = "Closed";
-    stock.sellPrice = sellPrice;
-    stock.profitLoss = ((sellPrice - stock.buyPrice) / stock.buyPrice) * 100; // Calculate P/L as percentage
+    if (!portfolio) {
+      return res.status(404).json({ message: "Portfolio not found" });
+    }
 
+    if (!stock) {
+      return res.status(404).json({ message: "Stock not found" });
+    }
+
+    const stockInPortfolio = portfolio.stocks.find((s) =>
+      s.stockId.equals(stockId),
+    );
+
+    if (!stockInPortfolio || stockInPortfolio.status === "Closed") {
+      return res.status(404).json({
+        message: "Stock not found in client portfolio or already sold",
+      });
+    }
+
+    const totalRevenue = sellPrice * stockInPortfolio.quantity;
+    stockInPortfolio.status = "Closed";
+    stockInPortfolio.sellPrice = sellPrice;
+    stockInPortfolio.profitLoss =
+      ((sellPrice - stockInPortfolio.buyPrice) / stockInPortfolio.buyPrice) *
+      100; // Calculate P/L as percentage
+
+    // Update stock availability and client's totalCash
+    stock.availableQuantity += stockInPortfolio.quantity;
+    client.totalCash += totalRevenue;
+
+    await stock.save();
+    await client.save();
     await portfolio.save();
     res.json({ message: "Stock sold successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// View all details related to stocks and clients
+
+export const viewAllClients = async (req, res) => {
+  try {
+    const clients = await Client.find();
+    res.json(clients);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const viewClientDetails = async (req, res) => {
+  const { clientId } = req.params;
+
+  try {
+    const client = await Client.findById(clientId);
+    if (!client) {
+      return res.status(404).json({ message: "Client not found" });
+    }
+
+    const portfolio = await Portfolio.findOne({ clientId }).populate(
+      "stocks.stockId",
+    );
+    res.json({ client, portfolio });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const viewAllStocks = async (req, res) => {
+  try {
+    const stocks = await Stock.find();
+    res.json(stocks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const viewStockDetails = async (req, res) => {
+  const { stockId } = req.params;
+
+  try {
+    const stock = await Stock.findById(stockId);
+    if (!stock) {
+      return res.status(404).json({ message: "Stock not found" });
+    }
+
+    const portfolios = await Portfolio.find({
+      "stocks.stockId": stockId,
+    }).populate("clientId");
+    res.json({ stock, portfolios });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
