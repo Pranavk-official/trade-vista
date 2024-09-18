@@ -8,7 +8,7 @@ dotenv.config();
 
 const opts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: process.env.JWT_SECRET, // Fallback to a default key if JWT_SECRET is undefined
+  secretOrKey: process.env.JWT_SECRET,
 };
 
 passport.use(
