@@ -1,4 +1,5 @@
 import Admin from "../models/Admin.js";
+import Client from "../models/Client.js";
 import { encryptPassword, comparePassword } from "../utils/encryptPassword.js";
 import { generateToken } from "../utils/generateToken.js";
 
@@ -39,6 +40,27 @@ export const adminLogin = async (req, res) => {
     }
 
     const token = generateToken(admin);
+    res.json({ token });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const clientLogin = async (req, res) => {
+  const { userId, password } = req.body;
+
+  try {
+    const client = await Client.findOne({ userId });
+    if (!client) {
+      return res.status(404).json({ message: "Client not found" });
+    }
+
+    const isPasswordValid = await comparePassword(password, client.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = generateToken(client);
     res.json({ token });
   } catch (error) {
     res.status(500).json({ message: error.message });
