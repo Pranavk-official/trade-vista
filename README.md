@@ -1,4 +1,3 @@
-# trade-vista
 # TradeVista
 
 TradeVista is a trading portfolio management application built using the MERN stack (MongoDB, Express.js, React, Node.js). It provides comprehensive dashboards for both clients and administrators, allowing for efficient management and monitoring of trading activities and portfolios.
@@ -104,5 +103,43 @@ The portfolio section allows both clients and admins to track and manage investm
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/tradevista.git
-   cd tradevista
+   git clone https://github.com/Pranavk-official/trade-vista.git
+   cd trade-vista
+   ```
+
+2. Install dependencies for both client and server:
+   ```bash
+   cd client
+   npm install
+   cd ../server
+   npm install
+   ```
+
+   or
+
+   ```bash
+   npm client-install
+
+   npm server-install
+   ```
+
+
+3. Set up environment variables. Create a `.env` file in the `server` directory with the following variables:
+   ```env
+   MONGO_URI=your_mongodb_connection_string
+   JWT_SECRET=your_jwt_secret
+   ```
+
+4. Run the server:
+   ```bash
+   npm run server
+   ```
+
+5. Run the client:
+   ```bash
+   npm run client
+   ```
+
+## Usage
+
+After installation, navigate to `http://localhost:3000` for the client dashboard and `http://localhost:5000` for the admin dashboard.
