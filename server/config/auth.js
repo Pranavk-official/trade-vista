@@ -3,9 +3,12 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import Admin from "../models/Admin.js";
 import Client from "../models/Client.js";
 
+import dotenv from "dotenv";
+dotenv.config();
+
 const opts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: "defaultSecret", // Fallback to a default key if JWT_SECRET is undefined
+  secretOrKey: process.env.JWT_SECRET, // Fallback to a default key if JWT_SECRET is undefined
 };
 
 passport.use(
