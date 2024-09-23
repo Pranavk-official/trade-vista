@@ -1,35 +1,62 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  useNavigate,
+} from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "react-query";
+import { AuthProvider } from "./contexts/AuthContext";
+import { AdminLogin } from "./pages/Auth/AdminLogin";
+import { ClientLogin } from "./pages/Auth/ClientLogin";
+import { AdminDashboard } from "./pages/Admin/AdminDashboard";
+import { ClientDashboard } from "./pages/Client/ClientDashboard";
+import { PrivateRoute } from "./components/common/PrivateRoute";
+import LandingPage from "./pages/LandingPage/LandingPage";
+import Unauthorized from "./pages/Auth/Unauthorized";
+import { useEffect } from "react";
+import { useAuth } from "./hooks/useAuth";
+const queryClient = new QueryClient();
 
-function App() {
-  const [count, setCount] = useState(0)
+const AppRoutes = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.role === "admin") {
+      navigate("/admin");
+    } else if (user?.role === "client") {
+      navigate("/client");
+    }
+  }, [user, navigate]);
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/admin-login" element={<AdminLogin />} />
+      <Route path="/client-login" element={<ClientLogin />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
 
-export default App
+      <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
+        <Route path="/admin" element={<AdminDashboard />} />
+      </Route>
+
+      <Route element={<PrivateRoute allowedRoles={["client"]} />}>
+        <Route path="/client" element={<ClientDashboard />} />
+      </Route>
+    </Routes>
+  );
+};
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
+
+export default App;
