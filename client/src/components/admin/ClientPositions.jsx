@@ -41,7 +41,7 @@ export const ClientPositions = ({ client }) => {
               </thead>
               <tbody>
                 {client.positions.map((position) => (
-                  <tr key={position.id}>
+                  <tr key={position.stockId.stockName}>
                     <td>{position.stockId.stockName}</td>
                     <td>{position.quantity}</td>
                     <td>${position?.buyPrice?.toFixed(2)}</td>

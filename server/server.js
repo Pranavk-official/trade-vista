@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use(
   cors({
-    origin: "https://trade-vista-plum.vercel.app",
+    origin: ["https://trade-vista-plum.vercel.app", "http://localhost:5173"],
   }),
 );
 
