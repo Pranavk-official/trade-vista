@@ -16,7 +16,11 @@ connectDB();
 const app = express();
 app.use(express.json());
 app.use(morgan("dev"));
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://trade-vista-plum.vercel.app",
+  }),
+);
 
 // Initialize Passport
 app.use(passport.initialize());
