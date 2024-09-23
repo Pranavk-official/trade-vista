@@ -33,6 +33,7 @@ const clientSchema = new mongoose.Schema(
         buyPrice: Number,
         sellPrice: Number,
         profitLoss: Number,
+        date: Date,
       },
     ],
     positions: [

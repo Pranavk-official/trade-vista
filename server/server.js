@@ -8,6 +8,7 @@ import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import clientRoutes from "./routes/clientRoutes.js";
 import "./config/auth.js"; // Import passport config
+import cors from "cors";
 
 dotenv.config();
 connectDB();
@@ -15,6 +16,7 @@ connectDB();
 const app = express();
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(cors());
 
 // Initialize Passport
 app.use(passport.initialize());

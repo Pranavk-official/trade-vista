@@ -4,7 +4,11 @@ import Portfolio from "../models/Portfolio.js";
 export const viewDashboard = async (req, res) => {
   try {
     const client = await Client.findById(req.user._id);
-    const portfolio = await Portfolio.findOne({ clientId: client._id });
+    const portfolio = await Portfolio.findOne({
+      clientId: client._id,
+    }).populate("stocks.stockId");
+
+    console.log(client, portfolio);
 
     res.json({
       name: client.name,
