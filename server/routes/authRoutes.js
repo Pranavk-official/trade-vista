@@ -3,6 +3,8 @@ import {
   adminLogin,
   registerAdmin,
   clientLogin,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -13,5 +15,9 @@ router.post("/admin/login", adminLogin);
 
 // Client Login
 router.post("/login", clientLogin);
+
+// Forgot Password
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 export default router;

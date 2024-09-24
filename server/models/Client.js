@@ -11,6 +11,11 @@ const clientSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     password: {
       type: String,
       required: true,
@@ -44,6 +49,8 @@ const clientSchema = new mongoose.Schema(
         profitLoss: Number,
       },
     ],
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
   },
   { timestamps: true },
 );

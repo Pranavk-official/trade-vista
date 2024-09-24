@@ -1,23 +1,31 @@
 import Client from "../models/Client.js";
 import Stock from "../models/Stock.js";
 import Portfolio from "../models/Portfolio.js";
+import Transaction from "../models/Transaction.js";
 import { encryptPassword } from "../utils/encryptPassword.js";
 
 export const createUser = async (req, res) => {
-  const { name, userId, password, totalCash } = req.body;
+  const { name, userId, email, password, totalCash } = req.body;
 
   try {
-    const existingUser = await Client.findOne({ userId });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+    const existingUserById = await Client.findOne({ userId });
+    const existingUserByEmail = await Client.findOne({ email });
+
+    if (existingUserById) {
+      return res.status(400).json({ message: "User ID already exists" });
+    }
+
+    if (existingUserByEmail) {
+      return res.status(400).json({ message: "Email already in use" });
     }
 
     const encryptedPassword = await encryptPassword(password);
     const newUser = await Client.create({
       name,
       userId,
+      email,
       password: encryptedPassword,
-      totalCash: parseFloat(totalCash),
+      totalCash: parseFloat(totalCash) || 0,
       availableToTrade: parseFloat(totalCash),
       marginUsed: 0,
     });
@@ -38,14 +46,12 @@ export const manageStock = async (req, res) => {
     const stock = await Stock.findOne({ stockSymbol });
 
     if (stock) {
-      // Update the existing stock
       stock.stockName = stockName;
       stock.price = parseFloat(price);
       stock.availableQuantity = parseInt(availableQuantity);
       await stock.save();
       res.status(200).json({ message: "Stock updated successfully", stock });
     } else {
-      // Create a new stock
       const newStock = await Stock.create({
         stockName,
         stockSymbol,
@@ -62,109 +68,147 @@ export const manageStock = async (req, res) => {
   }
 };
 
-export const buyStockForClient = async (req, res) => {
+export const adminBuyStockForClient = async (req, res) => {
+  const { clientId, stockId, stockSymbol, quantity } = req.body;
+
   try {
-    const { clientId, stockId, quantity } = req.body;
     const client = await Client.findById(clientId);
-    const stock = await Stock.findById(stockId);
+    const stock = stockId
+      ? await Stock.findById(stockId)
+      : await Stock.findOne({ stockSymbol });
+
     if (!client || !stock) {
-      return res.status(404).json({ message: "Client or stock not found" });
+      return res.status(404).json({ message: "Client or stock not found." });
     }
-    const totalCost = quantity * stock.price;
-    if (client.availableToTrade < totalCost) {
-      return res.status(400).json({ message: "Insufficient funds" });
-    }
+
     if (stock.availableQuantity < quantity) {
-      return res
-        .status(400)
-        .json({ message: "Insufficient stock quantity available" });
+      return res.status(400).json({ message: "Insufficient stock quantity." });
     }
 
-    // Update client's cash and available to trade
-    client.totalCash -= totalCost;
-    client.availableToTrade -= totalCost;
-    client.marginUsed += totalCost;
-
-    // Update or add to positions
-    let portfolio = await Portfolio.findOne({ clientId });
-    if (!portfolio) {
-      portfolio = new Portfolio({ clientId, stocks: [] });
+    const totalCost = stock.price * quantity;
+    if (client.availableToTrade < totalCost) {
+      return res.status(400).json({ message: "Insufficient available funds." });
     }
-    const existingPosition = portfolio.stocks.find(
-      (p) => p.stockId.toString() === stock._id.toString(),
+
+    // Update client's portfolio
+    const portfolio = await Portfolio.findOne({ clientId });
+    const stockIndex = portfolio.stocks.findIndex(
+      (s) => s.stockId.toString() === stockId,
     );
-    if (existingPosition) {
-      const totalQuantity = existingPosition.quantity + quantity;
-      existingPosition.buyPrice =
-        (existingPosition.buyPrice * existingPosition.quantity + totalCost) /
-        totalQuantity;
-      existingPosition.quantity = totalQuantity;
+
+    if (stockIndex >= 0) {
+      portfolio.stocks[stockIndex].quantity += quantity;
     } else {
       portfolio.stocks.push({
         stockId: stock._id,
         quantity,
         buyPrice: stock.price,
+        currentPrice: stock.price,
+        sellPrice: null,
+        status: "Open",
+        profitLoss: 0,
       });
     }
 
-    // Update stock quantity
+    // Update client finances
+    client.totalCash -= totalCost; // Deduct from total cash
+    client.marginUsed += totalCost;
+    client.availableToTrade -= totalCost; // Deduct from available funds
+
+    console.log(client);
+    await client.save();
+
     stock.availableQuantity -= quantity;
-    await Promise.all([client.save(), portfolio.save(), stock.save()]);
-    res.status(200).json({ message: "Stock bought successfully" });
-  } catch (error) {
-    console.error(error);
+    await stock.save();
+    await portfolio.save();
+
+    // Record transaction
+    const transaction = new Transaction({
+      clientId,
+      stockId: stock._id,
+      type: "buy",
+      quantity,
+      price: stock.price,
+      totalCost,
+      createdAt: new Date(),
+    });
+
+    await transaction.save();
+
     res
-      .status(500)
-      .json({ message: "Error buying stock", error: error.message });
+      .status(200)
+      .json({ message: "Stock purchased successfully.", portfolio });
+  } catch (error) {
+    console.error("Error buying stock:", error);
+    res.status(500).json({ message: "Failed to buy stock." });
   }
 };
 
-export const sellStockForClient = async (req, res) => {
+export const adminSellStockForClient = async (req, res) => {
+  const { clientId, stockId, stockSymbol, quantity } = req.body;
+
   try {
-    const { clientId, stockId, quantity } = req.body;
     const client = await Client.findById(clientId);
-    const stock = await Stock.findById(stockId);
-    if (!client || !stock) {
-      return res.status(404).json({ message: "Client or stock not found" });
-    }
+    const stock = stockId
+      ? await Stock.findById(stockId)
+      : await Stock.findOne({ stockSymbol });
+
     const portfolio = await Portfolio.findOne({ clientId });
-    if (!portfolio) {
-      return res.status(404).json({ message: "Client portfolio not found" });
+
+    if (!client || !stock || !portfolio) {
+      return res
+        .status(404)
+        .json({ message: "Client, stock, or portfolio not found." });
     }
-    const position = portfolio.stocks.find(
-      (p) => p.stockId.toString() === stock._id.toString(),
+
+    const stockPosition = portfolio.stocks.find(
+      (s) => s.stockId.toString() === stock._id.toString(),
     );
-    if (!position || position.quantity < quantity) {
-      return res.status(400).json({ message: "Insufficient stocks to sell" });
-    }
-    const totalSale = quantity * stock.price;
-    const profitLoss = (stock.price - position.buyPrice) * quantity;
 
-    // Update client's cash, available to trade, and margin used
-    client.totalCash += totalSale;
-    client.availableToTrade += totalSale;
-    client.marginUsed -= position.buyPrice * quantity;
-
-    // Update position
-    position.quantity -= quantity;
-    if (position.quantity === 0) {
-      portfolio.stocks = portfolio.stocks.filter(
-        (p) => p.stockId.toString() !== stock._id.toString(),
-      );
+    if (!stockPosition || stockPosition.quantity < quantity) {
+      return res
+        .status(400)
+        .json({ message: "Insufficient stock quantity in portfolio." });
     }
 
-    // Update stock quantity
+    const sellPrice = stock.price; // Current market price for selling
+    const profitLoss = (sellPrice - stockPosition.buyPrice) * quantity;
+
+    stockPosition.quantity -= quantity;
+    stockPosition.profitLoss += profitLoss;
+
+    if (stockPosition.quantity === 0) {
+      stockPosition.status = "Closed";
+      stockPosition.sellPrice = sellPrice;
+    }
+
+    // Update client finances
+    client.totalCash += sellPrice * quantity; // Add to total cash
+    client.availableToTrade += sellPrice * quantity; // Add to available funds
+    client.marginUsed -= sellPrice * quantity;
+    await client.save();
+
     stock.availableQuantity += quantity;
-    await Promise.all([client.save(), portfolio.save(), stock.save()]);
-    res.status(200).json({
-      message: "Stock sold successfully",
+    await stock.save();
+    await portfolio.save();
+
+    // Record transaction
+    const transaction = new Transaction({
+      clientId,
+      stockId: stock._id,
+      type: "sell",
+      quantity,
+      price: sellPrice,
+      totalCost: sellPrice * quantity,
+      createdAt: new Date(),
       profitLoss,
     });
+    await transaction.save();
+
+    res.status(200).json({ message: "Stock sold successfully.", portfolio });
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Error selling stock", error: error.message });
+    console.error("Error selling stock:", error);
+    res.status(500).json({ message: "Failed to sell stock." });
   }
 };
 
@@ -177,8 +221,8 @@ export const viewAllClients = async (req, res) => {
           clientId: client._id,
         }).populate("stocks.stockId");
         return {
-          ...client._doc, // Spreads the client details
-          positions: portfolio ? portfolio.stocks : [], // Add portfolio stocks as positions
+          ...client._doc,
+          positions: portfolio ? portfolio.stocks : [],
         };
       }),
     );

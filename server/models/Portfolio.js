@@ -11,6 +11,7 @@ const portfolioSchema = new mongoose.Schema(
       {
         stockId: { type: mongoose.Schema.Types.ObjectId, ref: "Stock" },
         quantity: Number,
+        currentPrice: Number,
         buyPrice: Number,
         sellPrice: Number,
         status: { type: String, enum: ["Open", "Closed"] },
