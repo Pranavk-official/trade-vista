@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import { useAuth } from "../../hooks/useAuth";
 import {
@@ -8,7 +8,6 @@ import {
   createUser,
   buyStockForClient,
   sellStockForClient,
-  fetchClientPositions,
 } from "../../services/api";
 import {
   ClientTable,
@@ -44,6 +43,7 @@ export const AdminDashboard = () => {
   const [userForm, setUserForm] = useState({
     name: "",
     userId: "",
+    email: "",
     password: "",
     totalCash: "",
   });
@@ -68,13 +68,6 @@ export const AdminDashboard = () => {
     "stocks",
     fetchStocks,
   );
-
-  const { data: selectedClientPositions, isLoading: isLoadingPositions } =
-    useQuery(
-      ["clientPositions", selectedClient?._id],
-      () => fetchClientPositions(selectedClient._id),
-      { enabled: !!selectedClient },
-    );
 
   const manageStockMutation = useMutation(manageStock, {
     onSuccess: () => {
@@ -146,11 +139,6 @@ export const AdminDashboard = () => {
 
   if (isLoadingClients || isLoadingStocks)
     return <progress className="progress w-56"></progress>;
-
-  const clientWithPositions =
-    selectedClient && selectedClientPositions
-      ? { ...selectedClient, positions: selectedClientPositions }
-      : null;
 
   return (
     <div className="min-h-screen bg-base-200 p-4 md:p-8">
@@ -267,6 +255,15 @@ export const AdminDashboard = () => {
           />
           <input
             className="input input-bordered w-full"
+            type="email"
+            name="email"
+            placeholder="User Email"
+            value={userForm.email}
+            onChange={handleUserFormChange}
+            required
+          />
+          <input
+            className="input input-bordered w-full"
             type="password"
             name="password"
             placeholder="Password"
@@ -274,15 +271,7 @@ export const AdminDashboard = () => {
             onChange={handleUserFormChange}
             required
           />
-          <input
-            className="input input-bordered w-full"
-            type="number"
-            name="totalCash"
-            placeholder="Total Cash"
-            value={userForm.totalCash}
-            onChange={handleUserFormChange}
-            required
-          />
+
           <button className="btn btn-primary" type="submit">
             Create User
           </button>

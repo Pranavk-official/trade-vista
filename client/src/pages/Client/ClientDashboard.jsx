@@ -57,12 +57,14 @@ const AddFundsModal = ({ isOpen, onClose }) => {
 export const ClientDashboard = () => {
   const { logout } = useAuth();
   const [isAddFundsModalOpen, setIsAddFundsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("positions");
+  const [activeTab, setActiveTab] = useState("open");
   const {
     data: clientData,
     isLoading,
     error,
   } = useQuery("clientData", () => apiCall("/client/dashboard"));
+
+  console.log(clientData);
 
   if (isLoading) return <div className="loading loading-lg"></div>;
   if (error) return <Alert variant="destructive">{error.message}</Alert>;
@@ -92,9 +94,9 @@ export const ClientDashboard = () => {
                   <p>Margin Used: ${clientData.marginUsed.toFixed(2)}</p>
                 </div>
                 <FundsUtilizationChart
-                  totalCash={clientData.totalCash}
-                  availableToTrade={clientData.availableToTrade}
-                  marginUsed={clientData.marginUsed}
+                  totalCash={clientData.totalCash.toFixed(2)}
+                  availableToTrade={clientData.availableToTrade.toFixed(2)}
+                  marginUsed={clientData.marginUsed.toFixed(2)}
                 />
               </div>
               <button
@@ -120,22 +122,28 @@ export const ClientDashboard = () => {
 
         <div className="tabs tabs-boxed">
           <a
-            className={`tab ${activeTab === "positions" ? "tab-active" : ""}`}
-            onClick={() => setActiveTab("positions")}
+            className={`tab ${activeTab === "open" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("open")}
           >
             Open Positions
           </a>
           <a
-            className={`tab ${activeTab === "transactions" ? "tab-active" : ""}`}
-            onClick={() => setActiveTab("transactions")}
+            className={`tab ${activeTab === "closed" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("closed")}
           >
-            Recent Transactions
+            Closed Positions
+          </a>
+          <a
+            className={`tab ${activeTab === "trades" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("trades")}
+          >
+            Recent Trades
           </a>
         </div>
 
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
-            {activeTab === "positions" ? (
+            {activeTab === "open" ? (
               <div className="overflow-x-auto">
                 <table className="table table-zebra w-full">
                   <thead>
@@ -148,26 +156,64 @@ export const ClientDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {clientData.positions.map((position) => {
-                      const profitLoss =
-                        (position.stockId.price - position.buyPrice) *
-                        position.quantity;
-                      return (
-                        <tr key={position.stockId._id}>
-                          <td>{position.stockId.stockName}</td>
-                          <td>{position.quantity}</td>
-                          <td>${position.buyPrice.toFixed(2)}</td>
-                          <td>${position.stockId.price.toFixed(2)}</td>
-                          <td
-                            className={
-                              profitLoss >= 0 ? "text-success" : "text-error"
-                            }
-                          >
-                            ${profitLoss.toFixed(2)}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {clientData.positions
+                      .filter((pos) => pos.status === "Open")
+                      .map((position) => {
+                        return (
+                          <tr key={position.stockName}>
+                            <td>{position.stockName}</td>
+                            <td>{position.quantity}</td>
+                            <td>${position.buyPrice.toFixed(2)}</td>
+                            <td>${position.buyPrice.toFixed(2)}</td>
+                            <td
+                              className={
+                                position.profitLoss >= 0
+                                  ? "text-success"
+                                  : "text-error"
+                              }
+                            >
+                              ${position.profitLoss}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            ) : activeTab === "closed" ? (
+              <div className="overflow-x-auto">
+                <table className="table table-zebra w-full">
+                  <thead>
+                    <tr>
+                      <th>Stock Name</th>
+                      <th>Quantity</th>
+                      <th>Buy Price</th>
+                      <th>Sell Price</th>
+                      <th>P/L</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clientData.positions
+                      .filter((pos) => pos.status === "Closed")
+                      .map((position) => {
+                        return (
+                          <tr key={position.stockName}>
+                            <td>{position.stockName}</td>
+                            <td>{position.quantity}</td>
+                            <td>${position.buyPrice.toFixed(2)}</td>
+                            <td>${position.sellPrice.toFixed(2)}</td>
+                            <td
+                              className={
+                                position.profitLoss >= 0
+                                  ? "text-success"
+                                  : "text-error"
+                              }
+                            >
+                              ${position.profitLoss.toFixed(2)}
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
@@ -185,20 +231,15 @@ export const ClientDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {clientData.recentTransactions.map((transaction, index) => (
+                    {clientData.transactionHistory.map((transaction, index) => (
                       <tr key={index}>
                         <td>
                           {new Date(transaction.date).toLocaleDateString()}
                         </td>
                         <td>{transaction.stockName}</td>
-                        <td>{transaction.sellPrice ? "Sell" : "Buy"}</td>
+                        <td>{transaction.type}</td>
                         <td>{transaction.quantity}</td>
-                        <td>
-                          $
-                          {transaction.sellPrice
-                            ? transaction.sellPrice
-                            : transaction.price}
-                        </td>
+                        <td>${transaction.price}</td>
                         <td
                           className={
                             transaction.profitLoss >= 0
@@ -206,9 +247,7 @@ export const ClientDashboard = () => {
                               : "text-error"
                           }
                         >
-                          {transaction.profitLoss !== null
-                            ? `$${transaction.profitLoss.toFixed(2)}`
-                            : "-"}
+                          ${transaction.profitLoss.toFixed(2)}
                         </td>
                       </tr>
                     ))}
