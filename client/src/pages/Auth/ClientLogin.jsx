@@ -77,7 +77,7 @@ export const ClientLogin = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`btn btn-primary w-full ${isLoading ? "loading" : ""}`}
+              className={`btn btn-primary ${isLoading ? "loading" : ""}`}
             >
               {isLoading ? "Logging in..." : "Login"}
             </button>
