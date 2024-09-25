@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import { useAuth } from "../../hooks/useAuth";
 import {
@@ -9,28 +9,20 @@ import {
   buyStockForClient,
   sellStockForClient,
 } from "../../services/api";
-import {
-  ClientTable,
-  StockTable,
-  ClientPositions,
-} from "../../components/admin";
+import { toast } from "react-toastify";
 
-const Modal = ({ isOpen, onClose, title, children }) => {
-  if (!isOpen) return null;
-  return (
-    <div className={`modal ${isOpen ? "modal-open" : ""}`}>
-      <div className="modal-box">
-        <h3 className="font-bold text-lg">{title}</h3>
-        {children}
-        <div className="modal-action">
-          <button className="btn" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+const ClientTable = lazy(() => import("../../components/admin/ClientTable"));
+const StockTable = lazy(() => import("../../components/admin/StockTable"));
+const ClientPositions = lazy(
+  () => import("../../components/admin/ClientPositions"),
+);
+const Modal = lazy(() => import("../../components/common/Modal"));
+
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center">
+    <span className="loading loading-spinner loading-lg"></span>
+  </div>
+);
 
 export const AdminDashboard = () => {
   const { logout } = useAuth();
@@ -79,6 +71,10 @@ export const AdminDashboard = () => {
         price: "",
         availableQuantity: "",
       });
+      toast.success("Stock updated successfully");
+    },
+    onError: (error) => {
+      toast.error(`Error updating stock: ${error.message}`);
     },
   });
 
@@ -86,7 +82,17 @@ export const AdminDashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries("clients");
       setIsUserFormOpen(false);
-      setUserForm({ name: "", userId: "", password: "", totalCash: "" });
+      setUserForm({
+        name: "",
+        userId: "",
+        email: "",
+        password: "",
+        totalCash: "",
+      });
+      toast.success("User created successfully");
+    },
+    onError: (error) => {
+      toast.error(`Error creating user: ${error.message}`);
     },
   });
 
@@ -95,6 +101,10 @@ export const AdminDashboard = () => {
       queryClient.invalidateQueries(["clients", "stocks"]);
       setIsTradeFormOpen(false);
       setTradeForm({ clientId: "", stockId: "", quantity: "", action: "buy" });
+      toast.success("Stock purchased successfully");
+    },
+    onError: (error) => {
+      toast.error(`Error buying stock: ${error.message}`);
     },
   });
 
@@ -103,6 +113,10 @@ export const AdminDashboard = () => {
       queryClient.invalidateQueries(["clients", "stocks"]);
       setIsTradeFormOpen(false);
       setTradeForm({ clientId: "", stockId: "", quantity: "", action: "sell" });
+      toast.success("Stock sold successfully");
+    },
+    onError: (error) => {
+      toast.error(`Error selling stock: ${error.message}`);
     },
   });
 
@@ -137,8 +151,7 @@ export const AdminDashboard = () => {
     }
   };
 
-  if (isLoadingClients || isLoadingStocks)
-    return <progress className="progress w-56"></progress>;
+  if (isLoadingClients || isLoadingStocks) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen bg-base-200 p-4 md:p-8">
@@ -187,10 +200,12 @@ export const AdminDashboard = () => {
             </div>
             {clients && clients.length > 0 ? (
               <div className="overflow-x-auto">
-                <ClientTable
-                  clients={clients}
-                  onClientSelect={setSelectedClient}
-                />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ClientTable
+                    clients={clients}
+                    onClientSelect={setSelectedClient}
+                  />
+                </Suspense>
               </div>
             ) : (
               <p>No clients available.</p>
@@ -210,13 +225,15 @@ export const AdminDashboard = () => {
             </button>
             {stocks && stocks.length > 0 ? (
               <div className="overflow-x-auto">
-                <StockTable
-                  stocks={stocks}
-                  onStockSelect={(stock) => {
-                    setStockForm(stock);
-                    setIsStockFormOpen(true);
-                  }}
-                />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <StockTable
+                    stocks={stocks}
+                    onStockSelect={(stock) => {
+                      setStockForm(stock);
+                      setIsStockFormOpen(true);
+                    }}
+                  />
+                </Suspense>
               </div>
             ) : (
               <p>No stocks available.</p>
@@ -226,164 +243,196 @@ export const AdminDashboard = () => {
       )}
 
       {activeTab === "clients" && selectedClient && (
-        <ClientPositions client={selectedClient} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <ClientPositions client={selectedClient} />
+        </Suspense>
       )}
 
-      <Modal
-        isOpen={isUserFormOpen}
-        onClose={() => setIsUserFormOpen(false)}
-        title="Create User"
-      >
-        <form onSubmit={handleUserSubmit} className="space-y-4">
-          <input
-            className="input input-bordered w-full"
-            type="text"
-            name="name"
-            placeholder="User Name"
-            value={userForm.name}
-            onChange={handleUserFormChange}
-            required
-          />
-          <input
-            className="input input-bordered w-full"
-            type="text"
-            name="userId"
-            placeholder="User ID"
-            value={userForm.userId}
-            onChange={handleUserFormChange}
-            required
-          />
-          <input
-            className="input input-bordered w-full"
-            type="email"
-            name="email"
-            placeholder="User Email"
-            value={userForm.email}
-            onChange={handleUserFormChange}
-            required
-          />
-          <input
-            className="input input-bordered w-full"
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={userForm.password}
-            onChange={handleUserFormChange}
-            required
-          />
+      <Suspense fallback={<LoadingSpinner />}>
+        <Modal
+          isOpen={isUserFormOpen}
+          onClose={() => setIsUserFormOpen(false)}
+          title="Create User"
+        >
+          <form onSubmit={handleUserSubmit} className="space-y-4">
+            <input
+              className="input input-bordered w-full"
+              type="text"
+              name="name"
+              placeholder="User Name"
+              value={userForm.name}
+              onChange={handleUserFormChange}
+              required
+            />
+            <input
+              className="input input-bordered w-full"
+              type="text"
+              name="userId"
+              placeholder="User ID"
+              value={userForm.userId}
+              onChange={handleUserFormChange}
+              required
+            />
+            <input
+              className="input input-bordered w-full"
+              type="email"
+              name="email"
+              placeholder="User Email"
+              value={userForm.email}
+              onChange={handleUserFormChange}
+              required
+            />
+            <input
+              className="input input-bordered w-full"
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={userForm.password}
+              onChange={handleUserFormChange}
+              required
+            />
+            <input
+              className="input input-bordered w-full"
+              type="number"
+              name="totalCash"
+              placeholder="Total Cash"
+              value={userForm.totalCash}
+              onChange={handleUserFormChange}
+              required
+            />
+            <button
+              className={`btn btn-primary ${createUserMutation.isLoading ? "loading" : ""}`}
+              type="submit"
+              disabled={createUserMutation.isLoading}
+            >
+              {createUserMutation.isLoading ? "Creating..." : "Create User"}
+            </button>
+          </form>
+        </Modal>
 
-          <button className="btn btn-primary" type="submit">
-            Create User
-          </button>
-        </form>
-      </Modal>
+        <Modal
+          isOpen={isStockFormOpen}
+          onClose={() => setIsStockFormOpen(false)}
+          title={stockForm._id ? "Edit Stock" : "Add Stock"}
+        >
+          <form onSubmit={handleStockSubmit} className="space-y-4">
+            <input
+              className="input input-bordered w-full"
+              type="text"
+              name="stockName"
+              placeholder="Stock Name"
+              value={stockForm.stockName}
+              onChange={handleStockFormChange}
+              required
+            />
+            <input
+              className="input input-bordered w-full"
+              type="text"
+              name="stockSymbol"
+              placeholder="Stock Symbol"
+              value={stockForm.stockSymbol}
+              onChange={handleStockFormChange}
+              required
+            />
+            <input
+              className="input input-bordered w-full"
+              type="number"
+              name="price"
+              placeholder="Price"
+              value={stockForm.price}
+              onChange={handleStockFormChange}
+              required
+            />
+            <input
+              className="input input-bordered w-full"
+              type="number"
+              name="availableQuantity"
+              placeholder="Available Quantity"
+              value={stockForm.availableQuantity}
+              onChange={handleStockFormChange}
+              required
+            />
+            <button
+              className={`btn btn-primary ${manageStockMutation.isLoading ? "loading" : ""}`}
+              type="submit"
+              disabled={manageStockMutation.isLoading}
+            >
+              {manageStockMutation.isLoading
+                ? "Processing..."
+                : stockForm._id
+                  ? "Update Stock"
+                  : "Add Stock"}
+            </button>
+          </form>
+        </Modal>
 
-      <Modal
-        isOpen={isStockFormOpen}
-        onClose={() => setIsStockFormOpen(false)}
-        title={stockForm._id ? "Edit Stock" : "Add Stock"}
-      >
-        <form onSubmit={handleStockSubmit} className="space-y-4">
-          <input
-            className="input input-bordered w-full"
-            type="text"
-            name="stockName"
-            placeholder="Stock Name"
-            value={stockForm.stockName}
-            onChange={handleStockFormChange}
-            required
-          />
-          <input
-            className="input input-bordered w-full"
-            type="text"
-            name="stockSymbol"
-            placeholder="Stock Symbol"
-            value={stockForm.stockSymbol}
-            onChange={handleStockFormChange}
-            required
-          />
-          <input
-            className="input input-bordered w-full"
-            type="number"
-            name="price"
-            placeholder="Price"
-            value={stockForm.price}
-            onChange={handleStockFormChange}
-            required
-          />
-          <input
-            className="input input-bordered w-full"
-            type="number"
-            name="availableQuantity"
-            placeholder="Available Quantity"
-            value={stockForm.availableQuantity}
-            onChange={handleStockFormChange}
-            required
-          />
-          <button className="btn btn-primary" type="submit">
-            {stockForm._id ? "Update Stock" : "Add Stock"}
-          </button>
-        </form>
-      </Modal>
-
-      <Modal
-        isOpen={isTradeFormOpen}
-        onClose={() => setIsTradeFormOpen(false)}
-        title="Trade Stock"
-      >
-        <form onSubmit={handleTradeSubmit} className="space-y-4">
-          <select
-            className="select select-bordered w-full"
-            name="clientId"
-            value={tradeForm.clientId}
-            onChange={handleTradeFormChange}
-            required
-          >
-            <option value="">Select Client</option>
-            {clients.map((client) => (
-              <option key={client._id} value={client._id}>
-                {client.name}
-              </option>
-            ))}
-          </select>
-          <select
-            className="select select-bordered w-full"
-            name="stockId"
-            value={tradeForm.stockId}
-            onChange={handleTradeFormChange}
-            required
-          >
-            <option value="">Select Stock</option>
-            {stocks.map((stock) => (
-              <option key={stock._id} value={stock._id}>
-                {stock.stockName}
-              </option>
-            ))}
-          </select>
-          <input
-            className="input input-bordered w-full"
-            type="number"
-            name="quantity"
-            placeholder="Quantity"
-            value={tradeForm.quantity}
-            onChange={handleTradeFormChange}
-            required
-          />
-          <select
-            className="select select-bordered w-full"
-            name="action"
-            value={tradeForm.action}
-            onChange={handleTradeFormChange}
-            required
-          >
-            <option value="buy">Buy</option>
-            <option value="sell">Sell</option>
-          </select>
-          <button className="btn btn-primary" type="submit">
-            Execute Trade
-          </button>
-        </form>
-      </Modal>
+        <Modal
+          isOpen={isTradeFormOpen}
+          onClose={() => setIsTradeFormOpen(false)}
+          title="Trade Stock"
+        >
+          <form onSubmit={handleTradeSubmit} className="space-y-4">
+            <select
+              className="select select-bordered w-full"
+              name="clientId"
+              value={tradeForm.clientId}
+              onChange={handleTradeFormChange}
+              required
+            >
+              <option value="">Select Client</option>
+              {clients.map((client) => (
+                <option key={client._id} value={client._id}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
+            <select
+              className="select select-bordered w-full"
+              name="stockId"
+              value={tradeForm.stockId}
+              onChange={handleTradeFormChange}
+              required
+            >
+              <option value="">Select Stock</option>
+              {stocks.map((stock) => (
+                <option key={stock._id} value={stock._id}>
+                  {stock.stockName}
+                </option>
+              ))}
+            </select>
+            <input
+              className="input input-bordered w-full"
+              type="number"
+              name="quantity"
+              placeholder="Quantity"
+              value={tradeForm.quantity}
+              onChange={handleTradeFormChange}
+              required
+            />
+            <select
+              className="select select-bordered w-full"
+              name="action"
+              value={tradeForm.action}
+              onChange={handleTradeFormChange}
+              required
+            >
+              <option value="buy">Buy</option>
+              <option value="sell">Sell</option>
+            </select>
+            <button
+              className={`btn btn-primary ${buyStockMutation.isLoading || sellStockMutation.isLoading ? "loading" : ""}`}
+              type="submit"
+              disabled={
+                buyStockMutation.isLoading || sellStockMutation.isLoading
+              }
+            >
+              {buyStockMutation.isLoading || sellStockMutation.isLoading
+                ? "Processing..."
+                : "Execute Trade"}
+            </button>
+          </form>
+        </Modal>
+      </Suspense>
     </div>
   );
 };
