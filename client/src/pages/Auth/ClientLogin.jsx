@@ -35,50 +35,61 @@ export const ClientLogin = () => {
     }
   };
 
+  const handleForgotPassword = () => {
+    navigate("/forgot-password"); // Navigate to the forgot password page
+  };
+
   return (
     <>
       <Navbar />
       <div className="min-h-screen bg-base-200 flex justify-center items-center">
         <form
           onSubmit={handleSubmit}
-          className="card w-full max-w-sm shadow-2xl bg-base-100"
+          className="card w-full max-w-sm shadow-2xl bg-base-100 p-6"
         >
-          <div className="card-body">
-            <h2 className="card-title justify-center text-2xl">Client Login</h2>
+          <h2 className="card-title text-center text-2xl mb-4">Client Login</h2>
 
-            {error && <p className="text-error mb-4">{error}</p>}
+          {error && <p className="text-error mb-4">{error}</p>}
 
-            <div className="form-control">
-              <input
-                type="text"
-                placeholder="User ID"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                disabled={isLoading}
-                className="input input-bordered"
-              />
-            </div>
+          <div className="form-control mb-4">
+            <input
+              type="text"
+              placeholder="User ID"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              disabled={isLoading}
+              className="input input-bordered"
+            />
+          </div>
 
-            <div className="form-control">
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                className="input input-bordered"
-              />
-            </div>
+          <div className="form-control mb-4">
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              className="input input-bordered"
+            />
+          </div>
 
-            <div className="form-control mt-6">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`btn btn-primary ${isLoading ? "loading" : ""}`}
-              >
-                {isLoading ? "Logging in..." : "Login"}
-              </button>
-            </div>
+          <div className="form-control mb-6">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`btn btn-primary w-full ${isLoading ? "loading" : ""}`}
+            >
+              {isLoading ? "Logging in..." : "Login"}
+            </button>
+          </div>
+
+          <div className="text-center">
+            <button
+              onClick={handleForgotPassword}
+              className="link link-primary"
+            >
+              Forgot Password?
+            </button>
           </div>
         </form>
       </div>

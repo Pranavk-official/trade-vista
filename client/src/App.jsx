@@ -13,6 +13,9 @@ import { ClientDashboard } from "./pages/Client/ClientDashboard";
 import { PrivateRoute } from "./components/common/PrivateRoute";
 import LandingPage from "./pages/LandingPage/LandingPage";
 import Unauthorized from "./pages/Auth/Unauthorized";
+import ForgotPasswordForm from "./pages/Auth/ForgotPasswordForm";
+import ResetPasswordForm from "./pages/Auth/ResetPasswordForm";
+
 import { useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
 const queryClient = new QueryClient();
@@ -32,6 +35,9 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
+
       <Route path="/admin-login" element={<AdminLogin />} />
       <Route path="/client-login" element={<ClientLogin />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
