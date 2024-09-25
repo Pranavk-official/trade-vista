@@ -189,10 +189,10 @@ export const AdminDashboard = () => {
         </div>
 
         <div className="flex-none">
+          <ThemeChanger />
           <button onClick={logout} className="btn btn-error">
             Logout
           </button>
-          <ThemeChanger />
         </div>
       </div>
 
@@ -249,7 +249,7 @@ export const AdminDashboard = () => {
               onClick={() => setIsStockFormOpen(true)}
               className="btn btn-primary mb-4"
             >
-              Add/Edit Stock
+              Add New Stock
             </button>
             {stocks && stocks.length > 0 ? (
               <div className="overflow-x-auto">
