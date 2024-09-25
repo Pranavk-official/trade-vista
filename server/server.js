@@ -50,7 +50,7 @@ const pingServer = () => {
   console.log("Performing scheduled ping at:", new Date().toISOString());
 };
 
-// Schedule the cron job to run every 60 seconds
-cron.schedule("*/1 * * * *", pingServer);
+// Schedule the cron job to run every 8 minutes
+cron.schedule("*/2 * * * *", pingServer);
 
 console.log("Cron job scheduled to ping server every 60 seconds");

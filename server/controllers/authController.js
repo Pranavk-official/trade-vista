@@ -91,9 +91,7 @@ export const forgotPassword = async (req, res) => {
     await client.save();
 
     // Create reset URL
-    const resetUrl = `${req.protocol}://${req.get(
-      "host",
-    )}/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
     const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
 
@@ -120,6 +118,8 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
+
+  console.log(req.params, req.body);
 
   try {
     // Get hashed token

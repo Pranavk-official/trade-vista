@@ -7,6 +7,8 @@ import { encryptPassword } from "../utils/encryptPassword.js";
 export const createUser = async (req, res) => {
   const { name, userId, email, password, totalCash } = req.body;
 
+  console.log(req.body);
+
   try {
     const existingUserById = await Client.findOne({ userId });
     const existingUserByEmail = await Client.findOne({ email });
@@ -26,7 +28,7 @@ export const createUser = async (req, res) => {
       email,
       password: encryptedPassword,
       totalCash: parseFloat(totalCash) || 0,
-      availableToTrade: parseFloat(totalCash),
+      availableToTrade: parseFloat(totalCash) || 0,
       marginUsed: 0,
     });
 
