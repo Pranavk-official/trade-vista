@@ -53,6 +53,7 @@ export const clientLogin = async (req, res) => {
   const { userId, password } = req.body;
 
   try {
+    console.log(req.body);
     const client = await Client.findOne({ userId });
     if (!client) {
       return res.status(404).json({ message: "Client not found" });
