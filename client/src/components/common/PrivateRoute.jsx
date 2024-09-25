@@ -6,7 +6,11 @@ export const PrivateRoute = ({ allowedRoles }) => {
   const location = useLocation();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen min-w-screen flex justify-center items-center">
+        <div className="loading-dots w-56"></div>
+      </div>
+    );
   }
 
   if (!user) {

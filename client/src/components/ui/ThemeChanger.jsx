@@ -1,4 +1,11 @@
-const ThemeSwitcher = () => {
+import { useEffect } from "react";
+import { themeChange } from "theme-change";
+
+const ThemeChanger = () => {
+  useEffect(() => {
+    themeChange(false); // Initializes the theme change without auto-init
+  }, []);
+
   return (
     <div className="dropdown dropdown-end">
       <label tabIndex={0} className="btn m-1">
@@ -6,26 +13,65 @@ const ThemeSwitcher = () => {
       </label>
       <ul
         tabIndex={0}
-        className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
+        className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10"
       >
         <li>
-          <a data-set-theme="light" data-act-class="ACTIVECLASS">
+          <button
+            data-set-theme="light"
+            data-act-class="active"
+            className="btn btn-outline"
+          >
             Light
-          </a>
+          </button>
         </li>
         <li>
-          <a data-set-theme="dark" data-act-class="ACTIVECLASS">
+          <button
+            data-set-theme="dark"
+            data-act-class="active"
+            className="btn btn-outline"
+          >
             Dark
-          </a>
+          </button>
         </li>
         <li>
-          <a data-set-theme="cupcake" data-act-class="ACTIVECLASS">
+          <button
+            data-set-theme="cupcake"
+            data-act-class="active"
+            className="btn btn-outline"
+          >
             Cupcake
-          </a>
+          </button>
+        </li>
+        <li>
+          <button
+            data-set-theme="bumblebee"
+            data-act-class="active"
+            className="btn btn-outline"
+          >
+            Bumblebee
+          </button>
+        </li>
+        <li>
+          <button
+            data-set-theme="emerald"
+            data-act-class="active"
+            className="btn btn-outline"
+          >
+            Emerald
+          </button>
+        </li>
+        <li>
+          <button
+            data-set-theme="corporate"
+            data-act-class="active"
+            className="btn btn-outline"
+          >
+            Corporate
+          </button>
         </li>
       </ul>
     </div>
   );
 };
 
-export default ThemeSwitcher;
+export default ThemeChanger;

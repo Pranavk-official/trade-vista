@@ -16,21 +16,24 @@ import Unauthorized from "./pages/Auth/Unauthorized";
 import ForgotPasswordForm from "./pages/Auth/ForgotPasswordForm";
 import ResetPasswordForm from "./pages/Auth/ResetPasswordForm";
 
-import { useEffect } from "react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+// import { useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user?.role === "admin") {
-      navigate("/admin");
-    } else if (user?.role === "client") {
-      navigate("/client");
-    }
-  }, [user, navigate]);
+  // useEffect(() => {
+  //   if (user?.role === "admin") {
+  //     navigate("/admin");
+  //   } else if (user?.role === "client") {
+  //     navigate("/client");
+  //   }
+  // }, [user, navigate]);
 
   return (
     <Routes>
@@ -55,13 +58,16 @@ const AppRoutes = () => {
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
-      </AuthProvider>
-    </QueryClientProvider>
+    <>
+      <ToastContainer />
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </AuthProvider>
+      </QueryClientProvider>
+    </>
   );
 };
 

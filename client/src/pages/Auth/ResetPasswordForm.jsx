@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { apiCall } from "../../services/api";
 import Navbar from "@components/common/Navbar.jsx";
 
@@ -10,6 +10,8 @@ const ResetPasswordForm = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +25,7 @@ const ResetPasswordForm = () => {
     try {
       await apiCall(`/auth/reset-password/${token}`, "POST", { password });
       setMessage("Password has been reset successfully.");
+      navigate("/client-login");
     } catch (err) {
       console.log(err);
       setError("Failed to reset password. Please try again.");

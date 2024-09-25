@@ -66,7 +66,12 @@ export const ClientDashboard = () => {
 
   console.log(clientData);
 
-  if (isLoading) return <div className="loading loading-lg"></div>;
+  if (isLoading)
+    return (
+      <div className="min-h-screen min-w-screen flex justify-center items-center">
+        <div className="loading loading-lg"></div>
+      </div>
+    );
   if (error) return <Alert variant="destructive">{error.message}</Alert>;
 
   return (
