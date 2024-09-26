@@ -45,12 +45,12 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// Cron Job to ping the server every 60 seconds
-const pingServer = () => {
-  console.log("Performing scheduled ping at:", new Date().toISOString());
-};
+// // Cron Job to ping the server every 60 seconds
+// const pingServer = () => {
+//   console.log("Performing scheduled ping at:", new Date().toISOString());
+// };
 
-// Schedule the cron job to run every 8 minutes
-cron.schedule("*/2 * * * *", pingServer);
+// // Schedule the cron job to run every 8 minutes
+// cron.schedule("*/2 * * * *", pingServer);
 
-console.log("Cron job scheduled to ping server every 60 seconds");
+// console.log("Cron job scheduled to ping server every 60 seconds");

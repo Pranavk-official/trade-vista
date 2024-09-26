@@ -15,11 +15,13 @@ const Navbar = () => {
               Client Login
             </Link>
           </li>
-          <li>
-            <Link to="/admin-login" className="btn btn-sm btn-neutral">
-              Admin Login
-            </Link>
-          </li>
+          {/*
+            <li>
+              <Link to="/admin-login" className="btn btn-sm btn-neutral">
+                Admin Login
+              </Link>
+            </li>
+          */}
         </ul>
       </div>
     </div>

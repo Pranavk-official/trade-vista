@@ -20,9 +20,11 @@ const LandingPage = () => (
               <Link to="/client-login" className="btn btn-accent">
                 Client Login
               </Link>
-              <Link to="/admin-login" className="btn btn-neutral">
-                Admin Login
-              </Link>
+              {/*
+                <Link to="/admin-login" className="btn btn-neutral">
+                  Admin Login
+                </Link>
+              */}
             </div>
           </div>
         </div>

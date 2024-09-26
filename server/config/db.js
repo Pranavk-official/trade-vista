@@ -298,21 +298,39 @@ const simulateTransactions = async () => {
 
     // Loop through all clients and simulate buy and sell transactions
     for (const client of clients) {
-      const stock = stocks[Math.floor(Math.random() * stocks.length)]; // Random stock selection
-      const buyQuantity = Math.floor(Math.random() * 10) + 1; // Random quantity between 1 and 10
+      // const stock = stocks[Math.floor(Math.random() * stocks.length)]; // Random stock selection
+      // const buyQuantity = Math.floor(Math.random() * 10) + 1; // Random quantity between 1 and 10
 
-      // Simulate buy for each client
-      await buyStock(client._id, stock._id, stock.price, buyQuantity);
+      // // Simulate buy for each client
+      // await buyStock(client._id, stock._id, stock.price, buyQuantity);
 
-      // Determine if the client should have profit or loss
-      if (profitClients.includes(client)) {
-        // Sell the stock at a higher price for profit
-        const profitSellPrice = stock.price * 1.2; // 20% profit
-        await sellStock(client._id, stock._id, profitSellPrice, buyQuantity);
-      } else {
-        // Sell the stock at a lower price for loss
-        const lossSellPrice = stock.price * 0.8; // 20% loss
-        await sellStock(client._id, stock._id, lossSellPrice, buyQuantity);
+      // // Determine if the client should have profit or loss
+      // if (profitClients.includes(client)) {
+      //   // Sell the stock at a higher price for profit
+      //   const profitSellPrice = stock.price * 1.2; // 20% profit
+      //   await sellStock(client._id, stock._id, profitSellPrice, buyQuantity);
+      // } else {
+      //   // Sell the stock at a lower price for loss
+      //   const lossSellPrice = stock.price * 0.8; // 20% loss
+      //   await sellStock(client._id, stock._id, lossSellPrice, buyQuantity);
+      // }
+      // Loop through all stocks
+      for (const stock of stocks) {
+        const buyQuantity = Math.floor(Math.random() * 10) + 1; // Random quantity between 1 and 10
+
+        // Simulate buy for the current client and stock
+        await buyStock(client._id, stock._id, stock.price, buyQuantity);
+
+        // Determine if the client should have profit or loss
+        if (profitClients.includes(client)) {
+          // Sell the stock at a higher price for profit
+          const profitSellPrice = stock.price * 1.2; // 20% profit
+          await sellStock(client._id, stock._id, profitSellPrice, buyQuantity);
+        } else {
+          // Sell the stock at a lower price for loss
+          const lossSellPrice = stock.price * 0.8; // 20% loss
+          await sellStock(client._id, stock._id, lossSellPrice, buyQuantity);
+        }
       }
     }
 
