@@ -71,7 +71,7 @@ export const manageStock = async (req, res) => {
 };
 
 export const adminBuyStockForClient = async (req, res) => {
-  const { clientId, stockId, stockSymbol, quantity } = req.body;
+  const { clientId, stockId, stockSymbol, buyPrice, quantity } = req.body;
 
   try {
     const client = await Client.findById(clientId);
@@ -87,15 +87,15 @@ export const adminBuyStockForClient = async (req, res) => {
       return res.status(400).json({ message: "Insufficient stock quantity." });
     }
 
-    const totalCost = stock.price * quantity;
+    const totalCost = buyPrice * quantity;
     if (client.availableToTrade < totalCost) {
       return res.status(400).json({ message: "Insufficient available funds." });
     }
 
-    // Update client's portfolio
+    // Update or create client's portfolio
     const portfolio = await Portfolio.findOne({ clientId });
     const stockIndex = portfolio.stocks.findIndex(
-      (s) => s.stockId.toString() === stockId,
+      (s) => s.stockId.toString() === stock._id.toString(),
     );
 
     if (stockIndex >= 0) {
@@ -104,8 +104,8 @@ export const adminBuyStockForClient = async (req, res) => {
       portfolio.stocks.push({
         stockId: stock._id,
         quantity,
-        buyPrice: stock.price,
-        currentPrice: stock.price,
+        buyPrice: buyPrice, // Use buyPrice from the form
+        currentPrice: stock.price, // This could be updated in real-time
         sellPrice: null,
         status: "Open",
         profitLoss: 0,
@@ -114,12 +114,12 @@ export const adminBuyStockForClient = async (req, res) => {
 
     // Update client finances
     client.totalCash -= totalCost; // Deduct from total cash
-    client.marginUsed += totalCost;
     client.availableToTrade -= totalCost; // Deduct from available funds
+    client.marginUsed += totalCost;
 
-    console.log(client);
     await client.save();
 
+    // Update stock's available quantity
     stock.availableQuantity -= quantity;
     await stock.save();
     await portfolio.save();
@@ -130,7 +130,7 @@ export const adminBuyStockForClient = async (req, res) => {
       stockId: stock._id,
       type: "buy",
       quantity,
-      price: stock.price,
+      price: buyPrice, // Price at which the stock is bought
       totalCost,
       createdAt: new Date(),
     });
@@ -147,7 +147,7 @@ export const adminBuyStockForClient = async (req, res) => {
 };
 
 export const adminSellStockForClient = async (req, res) => {
-  const { clientId, stockId, stockSymbol, quantity } = req.body;
+  const { clientId, stockId, stockSymbol, sellPrice, quantity } = req.body;
 
   try {
     const client = await Client.findById(clientId);
@@ -173,26 +173,25 @@ export const adminSellStockForClient = async (req, res) => {
         .json({ message: "Insufficient stock quantity in portfolio." });
     }
 
-    const sellPrice = stock.price; // Current market price for selling
-    const profitLoss = (sellPrice - stockPosition.buyPrice) * quantity;
+    const currentSellPrice = sellPrice || stock.price; // Use current market price if sellPrice is not provided
+    const profitLoss = (currentSellPrice - stockPosition.buyPrice) * quantity;
 
     stockPosition.quantity -= quantity;
     stockPosition.profitLoss += profitLoss;
 
     if (stockPosition.quantity === 0) {
       stockPosition.status = "Closed";
-      stockPosition.sellPrice = sellPrice;
+      stockPosition.sellPrice = currentSellPrice;
     }
 
     // Update client finances
-    client.totalCash += sellPrice * quantity; // Add to total cash
-    client.availableToTrade += sellPrice * quantity; // Add to available funds
-    client.marginUsed -= sellPrice * quantity;
-    await client.save();
+    const totalProceeds = currentSellPrice * quantity;
+    client.totalCash += totalProceeds; // Add to total cash
+    client.availableToTrade += totalProceeds; // Add to available funds
+    client.marginUsed -= totalProceeds;
 
+    // Update stock's available quantity
     stock.availableQuantity += quantity;
-    await stock.save();
-    await portfolio.save();
 
     // Record transaction
     const transaction = new Transaction({
@@ -200,12 +199,18 @@ export const adminSellStockForClient = async (req, res) => {
       stockId: stock._id,
       type: "sell",
       quantity,
-      price: sellPrice,
-      totalCost: sellPrice * quantity,
+      price: currentSellPrice, // Price at which the stock is sold
+      totalCost: totalProceeds,
       createdAt: new Date(),
       profitLoss,
     });
-    await transaction.save();
+
+    await Promise.all([
+      client.save(),
+      stock.save(),
+      portfolio.save(),
+      transaction.save(),
+    ]);
 
     res.status(200).json({ message: "Stock sold successfully.", portfolio });
   } catch (error) {
