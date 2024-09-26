@@ -71,7 +71,15 @@ export const manageStock = async (req, res) => {
 };
 
 export const adminBuyStockForClient = async (req, res) => {
-  const { clientId, stockId, stockSymbol, buyPrice, quantity } = req.body;
+  const { clientId, stockId, stockSymbol, price, quantity } = req.body;
+
+  let { buyPrice } = req.body;
+
+  if (price) {
+    buyPrice = price;
+  }
+
+  console.log(req.body);
 
   try {
     const client = await Client.findById(clientId);
@@ -100,6 +108,11 @@ export const adminBuyStockForClient = async (req, res) => {
 
     if (stockIndex >= 0) {
       portfolio.stocks[stockIndex].quantity += quantity;
+
+      // Change status to 'Open' if it was 'Closed'
+      if (portfolio.stocks[stockIndex].status === "Closed") {
+        portfolio.stocks[stockIndex].status = "Open";
+      }
     } else {
       portfolio.stocks.push({
         stockId: stock._id,
@@ -141,14 +154,19 @@ export const adminBuyStockForClient = async (req, res) => {
       .status(200)
       .json({ message: "Stock purchased successfully.", portfolio });
   } catch (error) {
-    console.error("Error buying stock:", error);
+    console.error("Error buying stock:", error.message);
     res.status(500).json({ message: "Failed to buy stock." });
   }
 };
 
 export const adminSellStockForClient = async (req, res) => {
-  const { clientId, stockId, stockSymbol, sellPrice, quantity } = req.body;
+  const { clientId, stockId, stockSymbol, price, quantity } = req.body;
 
+  let { sellPrice } = req.body;
+
+  if (price) {
+    sellPrice = price;
+  }
   try {
     const client = await Client.findById(clientId);
     const stock = stockId

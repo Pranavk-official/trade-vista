@@ -5,6 +5,9 @@ import Stock from "../models/Stock.js";
 import Portfolio from "../models/Portfolio.js";
 import Transaction from "../models/Transaction.js";
 
+import dotenv from "dotenv";
+
+dotenv.config();
 const mockStocks = [
   {
     stockName: "Apple Inc.",
@@ -343,12 +346,12 @@ const simulateTransactions = async () => {
 
 // Function to simulate buying a stock for a client
 const buyStock = async (clientId, stockId, buyPrice, quantity) => {
-  console.log({
-    clientId,
-    stockId,
-    buyPrice,
-    quantity,
-  });
+  // console.log({
+  //   clientId,
+  //   stockId,
+  //   buyPrice,
+  //   quantity,
+  // });
 
   try {
     const buyRes = await simulateApiCall("/admin/buy-stock", "POST", {
@@ -358,7 +361,7 @@ const buyStock = async (clientId, stockId, buyPrice, quantity) => {
       quantity,
     });
 
-    console.log(`Buy successful for client ${clientId}:`, buyRes);
+    console.log(`Buy successful for client ${clientId}:`, buyRes.data);
   } catch (error) {
     console.error(`Error buying stock for client ${clientId}:`, error.message);
   }
@@ -366,12 +369,12 @@ const buyStock = async (clientId, stockId, buyPrice, quantity) => {
 
 // Function to simulate selling a stock for a client
 const sellStock = async (clientId, stockId, sellPrice, quantity) => {
-  console.log({
-    clientId,
-    stockId,
-    sellPrice,
-    quantity,
-  });
+  // console.log({
+  //   clientId,
+  //   stockId,
+  //   sellPrice,
+  //   quantity,
+  // });
   try {
     const sellRes = await simulateApiCall("/admin/sell-stock", "POST", {
       clientId,
@@ -380,7 +383,7 @@ const sellStock = async (clientId, stockId, sellPrice, quantity) => {
       quantity,
     });
 
-    console.log(`Sell successful for client ${clientId}:`, sellRes);
+    console.log(`Sell successful for client ${clientId}:`, sellRes.data);
   } catch (error) {
     console.error(`Error selling stock for client ${clientId}:`, error.message);
   }

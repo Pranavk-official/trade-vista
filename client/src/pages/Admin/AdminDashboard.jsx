@@ -46,6 +46,7 @@ export const AdminDashboard = () => {
     stockId: "",
     quantity: "",
     action: "buy",
+    price: "",
   });
 
   const { data: clients, isLoading: isLoadingClients } = useQuery(
@@ -101,7 +102,7 @@ export const AdminDashboard = () => {
         stockId: "",
         quantity: "",
         action: "buy",
-        buyPrice: "",
+        price: "",
       });
       toast.success("Stock bought successfully!");
     },
@@ -119,7 +120,7 @@ export const AdminDashboard = () => {
         stockId: "",
         quantity: "",
         action: "sell",
-        sellPrice: "",
+        price: "",
       });
       toast.success("Stock sold successfully!");
     },
@@ -151,6 +152,7 @@ export const AdminDashboard = () => {
       clientId: tradeForm.clientId,
       stockId: tradeForm.stockId,
       quantity: parseInt(tradeForm.quantity),
+      price: parseFloat(tradeForm.price),
     };
     if (tradeForm.action === "buy") {
       buyStockMutation.mutate(tradeData);
@@ -391,15 +393,11 @@ export const AdminDashboard = () => {
           <input
             className="input input-bordered w-full"
             type="number"
-            name={tradeForm.action === "buy" ? "buyPrice" : "sellPrice"}
+            name="price"
             placeholder={
               tradeForm.action === "buy" ? "Buy Price" : "Sell Price"
             }
-            value={
-              tradeForm.action === "buy"
-                ? tradeForm.buyPrice || ""
-                : tradeForm.sellPrice || ""
-            }
+            value={tradeForm.price}
             onChange={handleTradeFormChange}
             required
           />
@@ -416,22 +414,7 @@ export const AdminDashboard = () => {
             className="select select-bordered w-full"
             name="action"
             value={tradeForm.action}
-            onChange={(e) => {
-              handleTradeFormChange(e);
-              if (e.target.value === "sell") {
-                setTradeForm({
-                  ...tradeForm,
-                  buyPrice: "",
-                  sellPrice: tradeForm.sellPrice || "",
-                });
-              } else {
-                setTradeForm({
-                  ...tradeForm,
-                  sellPrice: "",
-                  buyPrice: tradeForm.buyPrice || "",
-                });
-              }
-            }}
+            onChange={handleTradeFormChange}
             required
           >
             <option value="buy">Buy</option>
