@@ -18,22 +18,7 @@ import {
 import { toast } from "react-toastify";
 import ThemeChanger from "../../components/ui/ThemeChanger";
 
-const Modal = ({ isOpen, onClose, title, children }) => {
-  if (!isOpen) return null;
-  return (
-    <div className={`modal ${isOpen ? "modal-open" : ""}`}>
-      <div className="modal-box">
-        <h3 className="font-bold text-lg">{title}</h3>
-        {children}
-        <div className="modal-action">
-          <button className="btn" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+import Modal from "@components/common/Modal";
 
 export const AdminDashboard = () => {
   const { logout } = useAuth();
@@ -116,7 +101,7 @@ export const AdminDashboard = () => {
         stockId: "",
         quantity: "",
         action: "buy",
-        price: "",
+        buyPrice: "",
       });
       toast.success("Stock bought successfully!");
     },
@@ -134,7 +119,7 @@ export const AdminDashboard = () => {
         stockId: "",
         quantity: "",
         action: "sell",
-        price: "",
+        sellPrice: "",
       });
       toast.success("Stock sold successfully!");
     },
@@ -383,7 +368,7 @@ export const AdminDashboard = () => {
             required
           >
             <option value="">Select Client</option>
-            {clients.map((client) => (
+            {clients?.map((client) => (
               <option key={client._id} value={client._id}>
                 {client.name}
               </option>
@@ -406,6 +391,21 @@ export const AdminDashboard = () => {
           <input
             className="input input-bordered w-full"
             type="number"
+            name={tradeForm.action === "buy" ? "buyPrice" : "sellPrice"}
+            placeholder={
+              tradeForm.action === "buy" ? "Buy Price" : "Sell Price"
+            }
+            value={
+              tradeForm.action === "buy"
+                ? tradeForm.buyPrice || ""
+                : tradeForm.sellPrice || ""
+            }
+            onChange={handleTradeFormChange}
+            required
+          />
+          <input
+            className="input input-bordered w-full"
+            type="number"
             name="quantity"
             placeholder="Quantity"
             value={tradeForm.quantity}
@@ -416,7 +416,22 @@ export const AdminDashboard = () => {
             className="select select-bordered w-full"
             name="action"
             value={tradeForm.action}
-            onChange={handleTradeFormChange}
+            onChange={(e) => {
+              handleTradeFormChange(e);
+              if (e.target.value === "sell") {
+                setTradeForm({
+                  ...tradeForm,
+                  buyPrice: "",
+                  sellPrice: tradeForm.sellPrice || "",
+                });
+              } else {
+                setTradeForm({
+                  ...tradeForm,
+                  sellPrice: "",
+                  buyPrice: tradeForm.buyPrice || "",
+                });
+              }
+            }}
             required
           >
             <option value="buy">Buy</option>

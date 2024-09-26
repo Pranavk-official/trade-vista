@@ -1,4 +1,4 @@
-export const Modal = ({ isOpen, onClose, title, children }) => {
+const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   return (
     <div className={`modal ${isOpen ? "modal-open" : ""}`}>
@@ -14,3 +14,5 @@ export const Modal = ({ isOpen, onClose, title, children }) => {
     </div>
   );
 };
+
+export default Modal;
